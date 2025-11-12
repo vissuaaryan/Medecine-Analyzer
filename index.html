@@ -7,7 +7,7 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Inter Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=100..900&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -57,7 +57,6 @@
 
         <!-- Image Upload/Preview Area -->
         <div class="border-2 border-dashed border-indigo-300 rounded-lg p-6 mb-6 flex flex-col items-center">
-            <!-- We will attach the event listener in JavaScript instead of 'onchange' in HTML -->
             <input type="file" id="imageInput" accept="image/*" class="hidden"> 
             <label for="imageInput" id="uploadLabel" class="cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full transition duration-150 shadow-md">
                 दवा की फोटो चुनें
@@ -70,7 +69,6 @@
         </div>
 
         <!-- Analysis Button -->
-        <!-- We will attach the click listener in JavaScript instead of 'onclick' in HTML -->
         <button id="analyzeButton" 
                 class="w-full flex justify-center items-center bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-lg disabled:opacity-50"
                 disabled>
@@ -115,23 +113,24 @@
 
         // --- Utility Functions ---
 
-        // Function to convert file to Base64
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const base64Data = reader.result;
-                    // Extract data part and mime type
-                    const parts = base64Data.match(/^data:(.+?);base64,(.*)$/);
-                    if (parts && parts.length === 3) {
-                        resolve({ base64: parts[2], mimeType: parts[1] });
-                    } else {
-                        reject(new Error("Invalid base64 format or file read error"));
-                    }
-                };
-                reader.onerror = error => reject(error);
-                reader.readAsDataURL(file);
-            });
+        // Function to convert file to Base64 (Using FileReader for mobile reliability)
+        function fileToBase64(file, callback) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const base64Data = reader.result;
+                const parts = base64Data.match(/^data:(.+?);base64,(.*)$/);
+                if (parts && parts.length === 3) {
+                    callback({ base64: parts[2], mimeType: parts[1] });
+                } else {
+                    alertMessage("फ़ाइल पढ़ने में त्रुटि हुई। (Read Error)", 'bg-red-500');
+                    callback(null);
+                }
+            };
+            reader.onerror = () => {
+                alertMessage("फ़ाइल पढ़ने में त्रुटि हुई। (Reader Error)", 'bg-red-500');
+                callback(null);
+            };
+            reader.readAsDataURL(file);
         }
 
         function toggleLoading(isLoading) {
@@ -146,7 +145,7 @@
 
         // --- Event Listener Functions ---
 
-        async function previewImage(event) {
+        function previewImage(event) {
             const file = event.target.files[0];
             
             // 1. Reset
@@ -172,17 +171,16 @@
             imagePreview.src = URL.createObjectURL(file);
             imagePreviewContainer.classList.remove('hidden');
 
-            // 4. Convert to Base64 for API call
-            try {
-                const { base64, mimeType } = await fileToBase64(file);
-                uploadedImageBase64 = base64;
-                uploadedImageMimeType = mimeType;
-                analyzeButton.disabled = false; // Enable button only after successful conversion
-            } catch (error) {
-                console.error("Error converting file to base64:", error);
-                alertMessage("फ़ाइल पढ़ने में या Base64 रूपांतरण में त्रुटि हुई।", 'bg-red-500');
-                analyzeButton.disabled = true;
-            }
+            // 4. Convert to Base64 for API call and enable button
+            fileToBase64(file, (result) => {
+                if (result) {
+                    uploadedImageBase64 = result.base64;
+                    uploadedImageMimeType = result.mimeType;
+                    analyzeButton.disabled = false; // Enable button
+                } else {
+                    analyzeButton.disabled = true;
+                }
+            });
         }
 
         async function handleAnalysis() {
@@ -287,22 +285,16 @@
 
         // Simple Markdown to HTML converter (for displaying API response)
         function markdownToHtml(markdown) {
-            // Replace markdown headings (##, ###) with H2/H3 for styling
+            // This function converts the markdown response into styled HTML
             let html = markdown
-                .replace(/^###\s*(.*)$/gm, '<h3>$1</h3>') // Smaller sub-headings
-                .replace(/^##\s*(.*)$/gm, '<h2>$1</h2>'); // Main headings
+                .replace(/^###\s*(.*)$/gm, '<h3>$1</h3>') 
+                .replace(/^##\s*(.*)$/gm, '<h2>$1</h2>');
 
-            // Replace list items
+            // List handling
             html = html.replace(/^\\s(.*)$/gm, '<li>$1</li>');
-            html = html.replace(/^(ul>|li>|[^u<])/gm, (match, p1) => {
-                if (p1 === 'ul>' || p1 === 'li>' || p1.startsWith('<h') || p1.startsWith('<p')) {
-                    return match; // Don't modify
-                }
-                return p1;
-            });
             html = html.replace(/(<li>.<\/li>(\n<li>.<\/li>)*)/gs, '<ul>$1</ul>');
             
-            // Wrap paragraphs that are not inside other block elements
+            // Paragraph wrapping
             html = html.split('\n\n').map(p => {
                 if (p.trim() && !p.startsWith('<h') && !p.startsWith('<u')) {
                     return <p>${p.trim()}</p>;
@@ -310,11 +302,7 @@
                 return p;
             }).join('');
             
-            // Clean up multiple newlines
-            html = html.replace(/\n/g, '');
-            
-            // Fix list structure where tags are nested wrongly
-            html = html.replace(/<\/ul><ul>/g, '');
+            html = html.replace(/<\/ul><ul>/g, ''); // Fix nested lists
 
             return html;
         }
