@@ -57,7 +57,8 @@
 
         <!-- Image Upload/Preview Area -->
         <div class="border-2 border-dashed border-indigo-300 rounded-lg p-6 mb-6 flex flex-col items-center">
-            <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="previewImage(event)">
+            <!-- 'onchange' event is correctly attached to 'window.previewImage' function -->
+            <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="window.previewImage(event)">
             <label for="imageInput" class="cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full transition duration-150 shadow-md">
                 दवा की फोटो चुनें
             </label>
@@ -69,7 +70,7 @@
         </div>
 
         <!-- Analysis Button -->
-        <button id="analyzeButton" onclick="handleAnalysis()" 
+        <button id="analyzeButton" onclick="window.handleAnalysis()" 
                 class="w-full flex justify-center items-center bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-lg disabled:opacity-50"
                 disabled>
             <span id="buttonText">जानकारी प्राप्त करें</span>
@@ -94,7 +95,9 @@
     <script type="module">
         // Gemini API Configuration
         const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
-        const API_KEY = "AIzaSyBYPWXCeqdt9XDyDpD83LGeFOq85kt7lpU"; // Canvas will provide this in runtime
+        // *** IMPORTANT: YOUR ACTUAL GEMINI API KEY IS SET HERE ***
+        const API_KEY = "AIzaSyBYPWXCeqdt9XDyDpD83LGeFOq85kt7lpU"; 
+        // **********************************************************************
         const API_URL = https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY};
 
         const imageInput = document.getElementById('imageInput');
@@ -122,7 +125,7 @@
                     if (parts && parts.length === 3) {
                         resolve({ base64: parts[2], mimeType: parts[1] });
                     } else {
-                        reject(new Error("Invalid base64 format"));
+                        reject(new Error("Invalid base64 format or file read error"));
                     }
                 };
                 reader.onerror = error => reject(error);
@@ -134,28 +137,39 @@
 
         window.previewImage = async function(event) {
             const file = event.target.files[0];
-            if (file) {
-                // Display preview
-                imagePreview.src = URL.createObjectURL(file);
-                imagePreviewContainer.classList.remove('hidden');
-                
-                // Convert to Base64 for API call
-                try {
-                    const { base64, mimeType } = await fileToBase64(file);
-                    uploadedImageBase64 = base64;
-                    uploadedImageMimeType = mimeType;
-                    analyzeButton.disabled = false;
-                    resultsTitle.classList.add('hidden');
-                    resultsContent.innerHTML = '';
-                } catch (error) {
-                    console.error("Error converting file to base64:", error);
-                    alertMessage("फ़ाइल पढ़ने में त्रुटि हुई।", 'bg-red-500');
-                    analyzeButton.disabled = true;
-                }
-            } else {
-                imagePreviewContainer.classList.add('hidden');
-                uploadedImageBase64 = null;
-                uploadedImageMimeType = null;
+            
+            // 1. Reset
+            resultsContent.innerHTML = '';
+            resultsTitle.classList.add('hidden');
+            imagePreviewContainer.classList.add('hidden');
+            analyzeButton.disabled = true;
+            uploadedImageBase64 = null;
+            uploadedImageMimeType = null;
+
+            if (!file) {
+                return;
+            }
+
+            // 2. File Size Check (API limit and browser performance)
+            const MAX_SIZE = 5 * 1024 * 1024; // 5MB limit
+            if (file.size > MAX_SIZE) {
+                alertMessage("❌ फ़ाइल का आकार 5MB से ज़्यादा है। कृपया छोटी इमेज चुनें।", 'bg-red-500');
+                return;
+            }
+
+            // 3. Display preview
+            imagePreview.src = URL.createObjectURL(file);
+            imagePreviewContainer.classList.remove('hidden');
+
+            // 4. Convert to Base64 for API call
+            try {
+                const { base64, mimeType } = await fileToBase64(file);
+                uploadedImageBase64 = base64;
+                uploadedImageMimeType = mimeType;
+                analyzeButton.disabled = false;
+            } catch (error) {
+                console.error("Error converting file to base64:", error);
+                alertMessage("फ़ाइल पढ़ने में या Base64 रूपांतरण में त्रुटि हुई।", 'bg-red-500');
                 analyzeButton.disabled = true;
             }
         }
@@ -252,6 +266,9 @@
             resultsTitle.classList.remove('hidden');
             toggleLoading(true);
 
+            // API key check is no longer strictly necessary since the key is now hardcoded, 
+            // but we keep the logic clean.
+            
             const result = await analyzeMedicine(uploadedImageBase64, uploadedImageMimeType);
 
             toggleLoading(false);
@@ -283,6 +300,12 @@
 
             // Replace list items
             html = html.replace(/^\\s(.*)$/gm, '<li>$1</li>');
+            html = html.replace(/^(ul>|li>|[^u<])/gm, (match, p1) => {
+                if (p1 === 'ul>' || p1 === 'li>' || p1.startsWith('<h') || p1.startsWith('<p')) {
+                    return match; // Don't modify
+                }
+                return p1;
+            });
             html = html.replace(/(<li>.<\/li>(\n<li>.<\/li>)*)/gs, '<ul>$1</ul>');
             
             // Wrap paragraphs that are not inside other block elements
@@ -295,6 +318,9 @@
             
             // Clean up multiple newlines
             html = html.replace(/\n/g, '');
+            
+            // Fix list structure where tags are nested wrongly
+            html = html.replace(/<\/ul><ul>/g, '');
 
             return html;
         }
