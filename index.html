@@ -57,9 +57,9 @@
 
         <!-- Image Upload/Preview Area -->
         <div class="border-2 border-dashed border-indigo-300 rounded-lg p-6 mb-6 flex flex-col items-center">
-            <!-- 'onchange' event is correctly attached to 'window.previewImage' function -->
-            <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="window.previewImage(event)">
-            <label for="imageInput" class="cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full transition duration-150 shadow-md">
+            <!-- We will attach the event listener in JavaScript instead of 'onchange' in HTML -->
+            <input type="file" id="imageInput" accept="image/*" class="hidden"> 
+            <label for="imageInput" id="uploadLabel" class="cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full transition duration-150 shadow-md">
                 दवा की फोटो चुनें
             </label>
             <p class="text-sm text-gray-500 mt-3">या सीधे कैमरा खोलें।</p>
@@ -70,7 +70,8 @@
         </div>
 
         <!-- Analysis Button -->
-        <button id="analyzeButton" onclick="window.handleAnalysis()" 
+        <!-- We will attach the click listener in JavaScript instead of 'onclick' in HTML -->
+        <button id="analyzeButton" 
                 class="w-full flex justify-center items-center bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-lg disabled:opacity-50"
                 disabled>
             <span id="buttonText">जानकारी प्राप्त करें</span>
@@ -95,9 +96,9 @@
     <script type="module">
         // Gemini API Configuration
         const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
-        // *** IMPORTANT: YOUR ACTUAL GEMINI API KEY IS SET HERE ***
+        // *** API KEY IS SET HERE ***
         const API_KEY = "AIzaSyBYPWXCeqdt9XDyDpD83LGeFOq85kt7lpU"; 
-        // **********************************************************************
+        // ***************************
         const API_URL = https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY};
 
         const imageInput = document.getElementById('imageInput');
@@ -133,9 +134,19 @@
             });
         }
 
-        // --- UI Handlers ---
+        function toggleLoading(isLoading) {
+            analyzeButton.disabled = isLoading || !uploadedImageBase64;
+            loadingSpinner.classList.toggle('hidden', !isLoading);
+            buttonText.textContent = isLoading ? 'विश्लेषण हो रहा है...' : 'जानकारी प्राप्त करें';
+        }
+        
+        function alertMessage(message, styleClass) {
+            resultsContent.innerHTML = <div class="${styleClass} text-white p-3 rounded-lg font-semibold">${message}</div>;
+        }
 
-        window.previewImage = async function(event) {
+        // --- Event Listener Functions ---
+
+        async function previewImage(event) {
             const file = event.target.files[0];
             
             // 1. Reset
@@ -166,7 +177,7 @@
                 const { base64, mimeType } = await fileToBase64(file);
                 uploadedImageBase64 = base64;
                 uploadedImageMimeType = mimeType;
-                analyzeButton.disabled = false;
+                analyzeButton.disabled = false; // Enable button only after successful conversion
             } catch (error) {
                 console.error("Error converting file to base64:", error);
                 alertMessage("फ़ाइल पढ़ने में या Base64 रूपांतरण में त्रुटि हुई।", 'bg-red-500');
@@ -174,19 +185,39 @@
             }
         }
 
-        function toggleLoading(isLoading) {
-            analyzeButton.disabled = isLoading || !uploadedImageBase64;
-            loadingSpinner.classList.toggle('hidden', !isLoading);
-            buttonText.textContent = isLoading ? 'विश्लेषण हो रहा है...' : 'जानकारी प्राप्त करें';
+        async function handleAnalysis() {
+            if (!uploadedImageBase64) {
+                alertMessage("कृपया विश्लेषण के लिए पहले दवा की एक फोटो चुनें।", 'bg-red-500');
+                return;
+            }
+
+            resultsContent.innerHTML = '';
+            resultsTitle.classList.remove('hidden');
+            toggleLoading(true);
+
+            const result = await analyzeMedicine(uploadedImageBase64, uploadedImageMimeType);
+
+            toggleLoading(false);
+
+            if (result.error) {
+                alertMessage(❌ त्रुटि: ${result.error}, 'bg-red-500');
+            } else {
+                // Convert Markdown to HTML for display
+                const htmlContent = markdownToHtml(result.text);
+                resultsContent.innerHTML = htmlContent;
+                
+                // Add the mandatory safety disclaimer at the end
+                const safetyDisclaimer = `
+                    <div class="p-3 bg-red-100 border-l-4 border-red-500 text-red-700 mt-6 rounded-r-lg">
+                        <p class="font-bold">अस्वीकरण (Disclaimer)</p>
+                        <p class="text-sm">उपरोक्त जानकारी केवल AI द्वारा दवा की पहचान और शैक्षिक उद्देश्यों के लिए प्रदान की गई है। यह किसी भी तरह से योग्य चिकित्सा निदान, उपचार या पेशेवर डॉक्टरी सलाह का विकल्प नहीं है। किसी भी स्वास्थ्य समस्या के लिए या कोई भी दवा शुरू करने/बंद करने से पहले हमेशा अपने डॉक्टर या फार्मासिस्ट से परामर्श लें।</p>
+                    </div>
+                `;
+                resultsContent.innerHTML += safetyDisclaimer;
+            }
         }
         
-        function alertMessage(message, styleClass) {
-            // Simple alert implementation since window.alert is disallowed
-            resultsContent.innerHTML = <div class="${styleClass} text-white p-3 rounded-lg font-semibold">${message}</div>;
-        }
-
-        // --- API Call Logic ---
-
+        // --- API Call Logic (Unchanged and correct) ---
         async function analyzeMedicine(base64Image, mimeType) {
             const systemPrompt = "आप एक विश्वसनीय दवा सूचना विशेषज्ञ हैं। आपकी जानकारी हमेशा हिंदी में होनी चाहिए। आपको केवल दवा की पैकेजिंग/गोली/कैप्सूल की छवि का विश्लेषण करना है, दवा का नाम पहचानना है, और इस दवा के बारे में निम्नलिखित जानकारी विस्तृत रूप से, स्पष्ट शीर्षक (Markdown headings) के साथ प्रदान करनी है: 1. संघटन (Composition) 2. उपयोग (Uses) 3. प्रभाव और क्रिया विधि (Effects and Mechanism of Action) 4. संभावित दुष्प्रभाव और हानि (Potential Side Effects and Harms) 5. अक्सर पूछे जाने वाले प्रश्न (FAQs - इसमें कब, कहाँ, कैसे, क्यों जैसे प्रश्न शामिल करें)। चेतावनी: यह जानकारी केवल शैक्षिक उद्देश्यों के लिए है और इसे डॉक्टरी सलाह का विकल्प नहीं मानना चाहिए। जानकारी देने के बाद, एक अंतिम स्पष्टीकरण जोड़ें कि यह चिकित्सा सलाह नहीं है।";
             
@@ -241,7 +272,7 @@
 
             if (lastError) {
                 console.error("Failed to analyze after multiple retries:", lastError);
-                return { error: 'API कॉल में अधिकतम प्रयास के बाद भी त्रुटि हुई।' };
+                return { error: 'API कॉल में अधिकतम प्रयास के बाद भी त्रुटि हुई। (API Error)' };
             }
 
             const candidate = response.candidates?.[0];
@@ -250,44 +281,7 @@
                 return { text: candidate.content.parts[0].text };
             } else {
                 console.error("Unexpected API response structure:", response);
-                return { error: 'API से कोई परिणाम प्राप्त नहीं हुआ। कृपया एक स्पष्ट फोटो अपलोड करें।' };
-            }
-        }
-
-        // --- Main Handler ---
-
-        window.handleAnalysis = async function() {
-            if (!uploadedImageBase64) {
-                alertMessage("कृपया विश्लेषण के लिए पहले दवा की एक फोटो चुनें।", 'bg-red-500');
-                return;
-            }
-
-            resultsContent.innerHTML = '';
-            resultsTitle.classList.remove('hidden');
-            toggleLoading(true);
-
-            // API key check is no longer strictly necessary since the key is now hardcoded, 
-            // but we keep the logic clean.
-            
-            const result = await analyzeMedicine(uploadedImageBase64, uploadedImageMimeType);
-
-            toggleLoading(false);
-
-            if (result.error) {
-                alertMessage(❌ त्रुटि: ${result.error}, 'bg-red-500');
-            } else {
-                // Convert Markdown to HTML for display
-                const htmlContent = markdownToHtml(result.text);
-                resultsContent.innerHTML = htmlContent;
-                
-                // Add the mandatory safety disclaimer at the end
-                const safetyDisclaimer = `
-                    <div class="p-3 bg-red-100 border-l-4 border-red-500 text-red-700 mt-6 rounded-r-lg">
-                        <p class="font-bold">अस्वीकरण (Disclaimer)</p>
-                        <p class="text-sm">उपरोक्त जानकारी केवल AI द्वारा दवा की पहचान और शैक्षिक उद्देश्यों के लिए प्रदान की गई है। यह किसी भी तरह से योग्य चिकित्सा निदान, उपचार या पेशेवर डॉक्टरी सलाह का विकल्प नहीं है। किसी भी स्वास्थ्य समस्या के लिए या कोई भी दवा शुरू करने/बंद करने से पहले हमेशा अपने डॉक्टर या फार्मासिस्ट से परामर्श लें।</p>
-                    </div>
-                `;
-                resultsContent.innerHTML += safetyDisclaimer;
+                return { error: 'API से कोई परिणाम प्राप्त नहीं हुआ। कृपया एक स्पष्ट फोटो अपलोड करें। (No Result)' };
             }
         }
 
@@ -324,6 +318,12 @@
 
             return html;
         }
+
+        // --- Attaching Event Listeners after DOM is loaded ---
+        document.addEventListener('DOMContentLoaded', () => {
+            imageInput.addEventListener('change', previewImage);
+            analyzeButton.addEventListener('click', handleAnalysis);
+        });
 
     </script>
 </body>
