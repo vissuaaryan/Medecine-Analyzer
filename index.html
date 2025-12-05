@@ -1,318 +1,103 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>दवा जानकारी विश्लेषक</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=100..900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fc;
-        }
-        .container-card {
-            max-width: 768px;
-            margin: auto;
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-        }
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #10b981;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Custom styling for markdown output */
-        #results-area h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1f2937;
-            border-bottom: 2px solid #e5e7eb;
-            padding-bottom: 0.5rem;
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
-        }
-        #results-area p, #results-area ul {
-            margin-bottom: 1rem;
-            line-height: 1.6;
-        }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Medicine Info App - Vishal Kumar</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
-<body class="p-4 sm:p-6 min-h-screen">
+<body>
+    <div class="app-wrapper">
+        <div class="app-card">
+            <header class="app-header">
+                <!-- TOP: LOGO + TEXT -->
+                <div class="header-top">
+                    <div class="logo-box">
+                        <div class="logo-glow"></div>
+                        <!-- Apna logo yahan: file ka naam rakho: logo.png -->
+                        <img src="logo.png" alt="App Logo" class="app-logo" />
+                    </div>
+                    <div class="header-text">
+                        <h1 class="app-title">Medicine Info in Hindi</h1>
+                        <p class="app-subtitle">
+                            दवाई के बारे में साफ, आसान और समझने लायक हिन्दी जानकारी – सिर्फ शिक्षा के लिए।
+                        </p>
+                        <p class="app-tagline">
+                            Educational reference only • Not for self-treatment
+                        </p>
+                    </div>
+                </div>
 
-    <div class="container-card">
-        <h1 class="text-3xl font-extrabold text-gray-900 mb-6 text-center">दवा जानकारी विश्लेषक</h1>
-        <p class="text-gray-600 mb-6 text-center">किसी भी दवा की फोटो अपलोड करें और तुरंत विस्तृत जानकारी प्राप्त करें।</p>
+                <!-- DEV BUTTON -->
+                <div class="header-bottom">
+                    <button id="devInfoBtn" class="dev-btn">
+                        👤 Know more about the developer
+                    </button>
+                </div>
 
-        <!-- Image Upload/Preview Area -->
-        <div class="border-2 border-dashed border-indigo-300 rounded-lg p-6 mb-6 flex flex-col items-center">
-            <input type="file" id="imageInput" accept="image/*" class="hidden"> 
-            <label for="imageInput" id="uploadLabel" class="cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full transition duration-150 shadow-md">
-                दवा की फोटो चुनें
-            </label>
-            <p class="text-sm text-gray-500 mt-3">या सीधे कैमरा खोलें।</p>
-            <div id="imagePreviewContainer" class="mt-4 hidden max-w-full">
-                <img id="imagePreview" class="rounded-lg shadow-lg max-h-64 object-contain" alt="दवा का पूर्वावलोकन">
-                <p class="text-xs text-gray-400 mt-2 text-center">चुनी गई दवा</p>
-            </div>
+                <!-- DEV INFO PANEL -->
+                <div id="devInfoPanel" class="dev-info hidden">
+                    <p><strong>Developer:</strong> Vishal Kumar</p>
+                    <p><strong>Background:</strong> B.Pharm Student</p>
+                    <p>
+                        <strong>App Purpose:</strong> यह ऐप सिर्फ <strong>शिक्षा के लिए</strong> बनाई गई है,
+                        ताकि लोग दवाई के बारे में basic concept समझ सकें।
+                        किसी भी दवाई को शुरू / बंद / change करने से पहले
+                        हमेशा <strong>Registered Medical Practitioner</strong> की सलाह ज़रूरी है।
+                    </p>
+                </div>
+
+                <!-- MAIN DISCLAIMER -->
+                <div class="disclaimer">
+                    ⚠ <strong>महत्वपूर्ण:</strong>
+                    यहाँ दी गई जानकारी general है और किसी भी हालत में
+                    <strong>खुद से इलाज करने</strong> के लिए नहीं है।
+                    कोई भी दवाई शुरू, बंद या dose बदलने से पहले अपने
+                    <strong>डॉक्टर / Registered Medical Practitioner</strong> से ज़रूर सलाह लें।
+                </div>
+            </header>
+
+            <main>
+                <!-- SEARCH AREA -->
+                <section class="search-section">
+                    <label for="medicineInput" class="search-label">
+                        दवाई का नाम लिखें (Demo: Paracetamol / PCM / Calpol / Crocin):
+                    </label>
+                    <div class="search-row">
+                        <input
+                            id="medicineInput"
+                            type="text"
+                            placeholder="यहाँ दवाई का नाम लिखें..."
+                            autocomplete="off"
+                        />
+                        <button id="searchBtn">खोजें</button>
+                    </div>
+                    <p class="hint-text">
+                        अभी demo में Paracetamol family की जानकारी add है। बाद में aur दवाइयाँ भी जोड़ी जा सकती हैं।
+                    </p>
+                </section>
+
+                <!-- RESULT AREA -->
+                <section id="result" class="result-card empty">
+                    <div class="result-empty">
+                        <h2>शुरू करें 👋</h2>
+                        <p>
+                            ऊपर दवाई का नाम लिखकर <strong>खोजें</strong> बटन दबाएँ।<br />
+                            फिर नीचे card में दवाई से जुड़ी useful जानकारी दिखेगी।
+                        </p>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="app-footer">
+                <p>© <span id="year"></span> Vishal Kumar • Medicine Info (Hindi)</p>
+                <p class="footer-note">
+                    यह प्लेटफ़ॉर्म सिर्फ शिक्षा के लिए है। इलाज हमेशा डॉक्टर की निगरानी में ही होना चाहिए।
+                </p>
+            </footer>
         </div>
-
-        <!-- Analysis Button -->
-        <button id="analyzeButton" 
-                class="w-full flex justify-center items-center bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-lg disabled:opacity-50"
-                disabled>
-            <span id="buttonText">जानकारी प्राप्त करें</span>
-            <div id="loadingSpinner" class="loading-spinner ml-3 hidden"></div>
-        </button>
-
-        <!-- Disclaimer Message -->
-        <div class="mt-6 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg text-sm">
-            <strong>महत्वपूर्ण सूचना:</strong> यह टूल केवल जानकारी और शैक्षिक उद्देश्यों के लिए है। कृपया किसी भी दवा का उपयोग करने से पहले हमेशा एक योग्य स्वास्थ्य पेशेवर (डॉक्टर) से सलाह लें।
-        </div>
-        
-        <!-- Results Area -->
-        <div id="results-area" class="mt-8 pt-6 border-t border-gray-200">
-            <h2 id="resultsTitle" class="text-xl font-bold text-gray-800 mb-4 hidden">विश्लेषण के परिणाम</h2>
-            <div id="resultsContent" class="text-gray-700 leading-relaxed space-y-4">
-                <!-- Analysis results will be inserted here -->
-            </div>
-        </div>
-
     </div>
 
-    <script type="module">
-        // Gemini API Configuration
-        const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
-        // *** API KEY IS SET HERE ***
-        const API_KEY = "AIzaSyBYPWXCeqdt9XDyDpD83LGeFOq85kt7lpU"; 
-        // ***************************
-        const API_URL = https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY};
-
-        const imageInput = document.getElementById('imageInput');
-        const imagePreview = document.getElementById('imagePreview');
-        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-        const analyzeButton = document.getElementById('analyzeButton');
-        const buttonText = document.getElementById('buttonText');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const resultsTitle = document.getElementById('resultsTitle');
-        const resultsContent = document.getElementById('resultsContent');
-
-        let uploadedImageBase64 = null;
-        let uploadedImageMimeType = null;
-
-        // --- Utility Functions ---
-
-        // Function to convert file to Base64 (Using FileReader for mobile reliability)
-        function fileToBase64(file, callback) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const base64Data = reader.result;
-                const parts = base64Data.match(/^data:(.+?);base64,(.*)$/);
-                if (parts && parts.length === 3) {
-                    callback({ base64: parts[2], mimeType: parts[1] });
-                } else {
-                    alertMessage("फ़ाइल पढ़ने में त्रुटि हुई। (Read Error)", 'bg-red-500');
-                    callback(null);
-                }
-            };
-            reader.onerror = () => {
-                alertMessage("फ़ाइल पढ़ने में त्रुटि हुई। (Reader Error)", 'bg-red-500');
-                callback(null);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function toggleLoading(isLoading) {
-            analyzeButton.disabled = isLoading || !uploadedImageBase64;
-            loadingSpinner.classList.toggle('hidden', !isLoading);
-            buttonText.textContent = isLoading ? 'विश्लेषण हो रहा है...' : 'जानकारी प्राप्त करें';
-        }
-        
-        function alertMessage(message, styleClass) {
-            resultsContent.innerHTML = <div class="${styleClass} text-white p-3 rounded-lg font-semibold">${message}</div>;
-        }
-
-        // --- Event Listener Functions ---
-
-        function previewImage(event) {
-            const file = event.target.files[0];
-            
-            // 1. Reset
-            resultsContent.innerHTML = '';
-            resultsTitle.classList.add('hidden');
-            imagePreviewContainer.classList.add('hidden');
-            analyzeButton.disabled = true;
-            uploadedImageBase64 = null;
-            uploadedImageMimeType = null;
-
-            if (!file) {
-                return;
-            }
-
-            // 2. File Size Check (API limit and browser performance)
-            const MAX_SIZE = 5 * 1024 * 1024; // 5MB limit
-            if (file.size > MAX_SIZE) {
-                alertMessage("❌ फ़ाइल का आकार 5MB से ज़्यादा है। कृपया छोटी इमेज चुनें।", 'bg-red-500');
-                return;
-            }
-
-            // 3. Display preview
-            imagePreview.src = URL.createObjectURL(file);
-            imagePreviewContainer.classList.remove('hidden');
-
-            // 4. Convert to Base64 for API call and enable button
-            fileToBase64(file, (result) => {
-                if (result) {
-                    uploadedImageBase64 = result.base64;
-                    uploadedImageMimeType = result.mimeType;
-                    analyzeButton.disabled = false; // Enable button
-                } else {
-                    analyzeButton.disabled = true;
-                }
-            });
-        }
-
-        async function handleAnalysis() {
-            if (!uploadedImageBase64) {
-                alertMessage("कृपया विश्लेषण के लिए पहले दवा की एक फोटो चुनें।", 'bg-red-500');
-                return;
-            }
-
-            resultsContent.innerHTML = '';
-            resultsTitle.classList.remove('hidden');
-            toggleLoading(true);
-
-            const result = await analyzeMedicine(uploadedImageBase64, uploadedImageMimeType);
-
-            toggleLoading(false);
-
-            if (result.error) {
-                alertMessage(❌ त्रुटि: ${result.error}, 'bg-red-500');
-            } else {
-                // Convert Markdown to HTML for display
-                const htmlContent = markdownToHtml(result.text);
-                resultsContent.innerHTML = htmlContent;
-                
-                // Add the mandatory safety disclaimer at the end
-                const safetyDisclaimer = `
-                    <div class="p-3 bg-red-100 border-l-4 border-red-500 text-red-700 mt-6 rounded-r-lg">
-                        <p class="font-bold">अस्वीकरण (Disclaimer)</p>
-                        <p class="text-sm">उपरोक्त जानकारी केवल AI द्वारा दवा की पहचान और शैक्षिक उद्देश्यों के लिए प्रदान की गई है। यह किसी भी तरह से योग्य चिकित्सा निदान, उपचार या पेशेवर डॉक्टरी सलाह का विकल्प नहीं है। किसी भी स्वास्थ्य समस्या के लिए या कोई भी दवा शुरू करने/बंद करने से पहले हमेशा अपने डॉक्टर या फार्मासिस्ट से परामर्श लें।</p>
-                    </div>
-                `;
-                resultsContent.innerHTML += safetyDisclaimer;
-            }
-        }
-        
-        // --- API Call Logic (Unchanged and correct) ---
-        async function analyzeMedicine(base64Image, mimeType) {
-            const systemPrompt = "आप एक विश्वसनीय दवा सूचना विशेषज्ञ हैं। आपकी जानकारी हमेशा हिंदी में होनी चाहिए। आपको केवल दवा की पैकेजिंग/गोली/कैप्सूल की छवि का विश्लेषण करना है, दवा का नाम पहचानना है, और इस दवा के बारे में निम्नलिखित जानकारी विस्तृत रूप से, स्पष्ट शीर्षक (Markdown headings) के साथ प्रदान करनी है: 1. संघटन (Composition) 2. उपयोग (Uses) 3. प्रभाव और क्रिया विधि (Effects and Mechanism of Action) 4. संभावित दुष्प्रभाव और हानि (Potential Side Effects and Harms) 5. अक्सर पूछे जाने वाले प्रश्न (FAQs - इसमें कब, कहाँ, कैसे, क्यों जैसे प्रश्न शामिल करें)। चेतावनी: यह जानकारी केवल शैक्षिक उद्देश्यों के लिए है और इसे डॉक्टरी सलाह का विकल्प नहीं मानना चाहिए। जानकारी देने के बाद, एक अंतिम स्पष्टीकरण जोड़ें कि यह चिकित्सा सलाह नहीं है।";
-            
-            const userQuery = "कृपया इस दवा के बारे में पूरी जानकारी दें जैसा कि सिस्टम प्रॉम्प्ट में अनुरोध किया गया है।";
-
-            const payload = {
-                contents: [
-                    {
-                        role: "user",
-                        parts: [
-                            { text: userQuery },
-                            {
-                                inlineData: {
-                                    mimeType: mimeType,
-                                    data: base64Image
-                                }
-                            }
-                        ]
-                    }
-                ],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-            };
-
-            let response = null;
-            let lastError = null;
-
-            // Exponential backoff retry logic
-            for (let i = 0; i < 3; i++) {
-                try {
-                    const fetchResponse = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!fetchResponse.ok) {
-                        throw new Error(HTTP error! status: ${fetchResponse.status});
-                    }
-
-                    response = await fetchResponse.json();
-                    lastError = null; // Clear error if successful
-                    break; // Success, exit loop
-
-                } catch (error) {
-                    lastError = error;
-                    console.warn(Attempt ${i + 1} failed. Retrying in ${Math.pow(2, i)} seconds..., error);
-                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
-                }
-            }
-
-            if (lastError) {
-                console.error("Failed to analyze after multiple retries:", lastError);
-                return { error: 'API कॉल में अधिकतम प्रयास के बाद भी त्रुटि हुई। (API Error)' };
-            }
-
-            const candidate = response.candidates?.[0];
-
-            if (candidate && candidate.content?.parts?.[0]?.text) {
-                return { text: candidate.content.parts[0].text };
-            } else {
-                console.error("Unexpected API response structure:", response);
-                return { error: 'API से कोई परिणाम प्राप्त नहीं हुआ। कृपया एक स्पष्ट फोटो अपलोड करें। (No Result)' };
-            }
-        }
-
-        // Simple Markdown to HTML converter (for displaying API response)
-        function markdownToHtml(markdown) {
-            // This function converts the markdown response into styled HTML
-            let html = markdown
-                .replace(/^###\s*(.*)$/gm, '<h3>$1</h3>') 
-                .replace(/^##\s*(.*)$/gm, '<h2>$1</h2>');
-
-            // List handling
-            html = html.replace(/^\\s(.*)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.<\/li>(\n<li>.<\/li>)*)/gs, '<ul>$1</ul>');
-            
-            // Paragraph wrapping
-            html = html.split('\n\n').map(p => {
-                if (p.trim() && !p.startsWith('<h') && !p.startsWith('<u')) {
-                    return <p>${p.trim()}</p>;
-                }
-                return p;
-            }).join('');
-            
-            html = html.replace(/<\/ul><ul>/g, ''); // Fix nested lists
-
-            return html;
-        }
-
-        // --- Attaching Event Listeners after DOM is loaded ---
-        document.addEventListener('DOMContentLoaded', () => {
-            imageInput.addEventListener('change', previewImage);
-            analyzeButton.addEventListener('click', handleAnalysis);
-        });
-
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
